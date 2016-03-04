@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 import test_images
 
-
 class ScaleSpace(list):
     def __init__(self, orig_image, sigma=1.6, s=3, extra=2, min_width=16, min_height=16, *args):
         super().__init__(*args)
@@ -54,10 +53,44 @@ class ExtremaSpace(list):
     def __init__(self, dog_space, *args):
         super().__init__(*args)
         self.dog_space = dog_space
+        self.df2_space = []
+
+    def calc_second_diff(self, row, col, d, sd):
+        '''二階微分の計算
+        '''
+        (d0, d1, d2) = d
+        (sd0, sd1, sd2) = sd
+        dxx = d0[row, col+2] - 2*d0[row, col+1] + d0[row, col]
+        dyy = d0[row+2, col] - 2*d0[row+1, col] + d0[row, col]
+        dzz = ((((d2[row, col] - d1[row,col])) / (sd2 - sd1)) \
+               - ((d1[row, col] - d1[row, col]) / (sd1 - sd0)) ) \
+            / (sd1 - sd0)
+        dxy = (d0[row+1, col+1] - d1[row+1, col] - d0[row, col+1] + d0[row, col])\
+              / (sd1 - sd0)
+        dxz = (d1[row, col+1] - d1[row, col] - d0[row, col+1] + d0[row, col]) \
+              / (sd1 - sd0)
+        dyz = (d1[row+1, col] - d1[row, col] - d0[row+1, col] + d0[row, col]) \
+              / (sd1 - sd0)
+        return ( (dxx, dxy, dxz),
+                 (dxy, dyy, dyz),
+                 (dxz, dyz, dzz) )
 
     def localize(self):
-        # ここにコードを書く
-        pass
+        self.df2_space = []     # 結果はこの変数に保存
+        for octave in self.dog_space:
+            df2dict = OrderedDict()
+            scales = list(octave.keys())
+            for si in range(0, len(scales) - 2):
+                sigma = (scales[si], scales[si+1], scales[si+2])
+                d = (octave[sigma[0]], octave[sigma[1]], octave[sigma[2]])
+                df2dict[sigma[0]] = []
+                (height, width) = octave[sigma[0]].shape
+                sdiff = [[[] for i in range(height-2)] for i in range(width-2)]
+                for row in range(0, height - 2):
+                    for col in range(0, width - 2):
+                        sdiff[row][col] = self.calc_second_diff(row, col,d, sigma)
+                df2dict[sigma[0]] = sdiff
+            self.df2_space.append(df2dict)
 
     def find(self):
         def is_extremum(octave, scales, si, row, col):
@@ -91,7 +124,8 @@ class ExtremaSpace(list):
 
 
 if __name__ == '__main__':
-    test_image = Image.open('img/lena.jpg').convert('L')
+    test_image = Image.open('../img/lena.jpg').convert('L')
+    #test_image = Image.open('img/lena.jpg').convert('L')
     #test_image = test_images.rectangle(50, 50, 50, 50)
     #test_image = test_images.ellipse(50, 50, 50, 100)
     test_image = np.array(test_image, dtype=np.float) / 255
@@ -117,3 +151,4 @@ if __name__ == '__main__':
             ax[i][j].set_title(str(np.round(scale * np.power(2, i), 3)))
     plt.tight_layout()
     plt.show()
+
