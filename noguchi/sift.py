@@ -76,11 +76,11 @@ class ExtremaSpace(list):
 
         # cross
         d2xy = (octave[sigma][i+1, j+1] - octave[sigma][i+1, j]) - (octave[sigma][i, j+1] - octave[sigma][i,j])
-        d2xs = (octave[sigma+dsigma2][i, j+1] - octave[sigma+dsigma2][i, j]) \
-               - (octave[sigma][i, j+1] - octave[sigma][i, j]) / dsigma2
+        d2xs = ((octave[sigma+dsigma2][i, j+1] - octave[sigma+dsigma2][i, j]) \
+               - (octave[sigma][i, j+1] - octave[sigma][i, j])) / dsigma2
 
-        d2ys = (octave[sigma+dsigma2][i+1, j] - octave[sigma+dsigma2][i, j]) \
-               - (octave[sigma][i+1, j] - octave[sigma][i, j]) / dsigma2
+        d2ys = ((octave[sigma+dsigma2][i+1, j] - octave[sigma+dsigma2][i, j]) \
+               - (octave[sigma][i+1, j] - octave[sigma][i, j])) / dsigma2
 
         return np.array([[d2x, d2xy, d2xs],
                         [d2xy, d2y, d2ys],
